@@ -1,4 +1,4 @@
-"""Graph geodesic distance calculations."""
+"""DESCRIPTION."""
 # License: GNU AGPLv3
 
 from functools import reduce
@@ -44,8 +44,7 @@ def current_flow(X):
     L = sparse.csgraph.laplacian(X).A
     C = np.zeros(L.shape)
     C[1:,1:] = np.linalg.inv(L[1:,1:])
-
-    return resistance_to_flow2(C, X.indptr, X.indices)
+    return resistance_to_flow(C, X.indptr, X.indices)
 
 
 # -------------------------------------------------------------------
@@ -53,17 +52,17 @@ def current_flow(X):
 # -------------------------------------------------------------------
 
 # @adapt_fit_transform_docs --> not sure what this is doing..
-class GraphCurrentFlowCentrality(BaseEstimator, TransformerMixin, PlotterMixin):
+class GraphCurrentFlowCentrality(BaseEstimator, TransformerMixin):
     """Weighted adjacency matrices arising from current-flow centrality measure
     on graphs.
 
     For each (unweighted) graph in a collection, this transformer calculates
     the (edge-based) current flow centrality measure for each edge in the graph.
-    For a fixed pair of vertices (s,t) the st-current flow of an edge (i,j) is
+    Given two vertices s and t the st-current flow of an edge (i,j) is
     defined to be the expected number of times a random walker is trespassing
     the edge (i,j) when starting at the node s and stopping at node t. The
     (overall) current-flow is defined as the average of all st-current flows,
-    for all possible (s,t) pairs.
+    for all possible s and t.
 
     The graphs are represented by their adjacency matrices which can be dense
     arrays, sparse matrices or masked arrays. The following rules apply:
@@ -178,7 +177,7 @@ class GraphCurrentFlowCentrality(BaseEstimator, TransformerMixin, PlotterMixin):
         X = check_graph(X)
 
         Xt = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._geodesic_distance)(x, i=i) for i, x in enumerate(X))
+            delayed(self._current_flow)(x, i=i) for i, x in enumerate(X))
 
         x0_shape = Xt[0].shape
         if reduce(and_, (x.shape == x0_shape for x in Xt), True):
