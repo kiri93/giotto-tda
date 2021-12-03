@@ -106,3 +106,30 @@ def make_gravitational_waves(
         gw_signals.append(signal)
 
     return noisy_signals, gw_signals, labels
+
+# ==================================================================
+#  --------------------------- RINGITY ----------------------------
+# ==================================================================
+
+## ---------
+##  ANNULUS
+## ---------
+
+def half_circ(x, r=1):
+    return np.sqrt(r**2 - x**2)
+
+def sample_annulus(N, 
+            r = 1, 
+            seed = None):
+    """ Outside radius is taken to be 1"""
+    
+    np.random.seed(seed=seed)
+    u,v = np.random.uniform(0,1,[2,N])
+    
+    phi = 2*np.pi*u
+    r = np.sqrt((1-r**2)*v + r**2)
+    
+    x = r*np.cos(phi)
+    y = r*np.sin(phi)
+    
+    return x,y
