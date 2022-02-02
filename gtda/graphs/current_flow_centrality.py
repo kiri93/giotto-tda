@@ -10,8 +10,7 @@ from joblib import Parallel, delayed
 from numba import njit
 from numpy.ma import masked_invalid
 from numpy.ma.core import MaskedArray
-from scipy.sparse import csr
-from scipy.sparse import issparse, isspmatrix_csr
+from scipy.sparse import csr, csgraph, issparse, isspmatrix_csr
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 
@@ -37,14 +36,16 @@ def resistance_to_flow(C, row_idx, col_idx):
     [TODO: DOCSTRING + TESTING]
     """
     return [edge_to_single_value(C, u, v)
-                    for (u,v) in zip(row_idx, col_idx) if u < v]
+                    for (u,v) in zip(row_idx, col_idx) if u <= v]
 
-def current_flow(X):
+def current_flow(A):
     """[TODO: DOCSTRING + TESTING]"""
-    L = sparse.csgraph.laplacian(X).A
+    L = csgraph.laplacian(A).A
     C = np.zeros(L.shape)
     C[1:,1:] = np.linalg.inv(L[1:,1:])
-    return resistance_to_flow(C, X.indptr, X.indices)
+    A_coo = A.tocoo()
+    values = resistance_to_flow(C, A.indptr, A.indices)
+    return values
 
 
 # -------------------------------------------------------------------
