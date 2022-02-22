@@ -10,7 +10,7 @@ from joblib import Parallel, delayed
 from numba import njit
 from numpy.ma import masked_invalid
 from numpy.ma.core import MaskedArray
-from scipy.sparse import csr, csgraph, issparse, isspmatrix_csr
+from scipy.sparse import csr, csgraph, issparse, isspmatrix_csr, coo_matrix
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.validation import check_is_fitted
 
@@ -35,17 +35,19 @@ def resistance_to_flow(C, row_idx, col_idx):
     [TODO: RETURN MATRIX INSTEAD OF LIST]
     [TODO: DOCSTRING + TESTING]
     """
-    return [edge_to_single_value(C, u, v)
-                    for (u,v) in zip(row_idx, col_idx) if u <= v]
+    return [edge_to_single_value(C, u, v) for (u,v) in zip(row_idx, col_idx)]
 
 def current_flow(A):
     """[TODO: DOCSTRING + TESTING]"""
-    L = csgraph.laplacian(A).A
+    
+    L = csgraph.laplacian(A).toarray()
     C = np.zeros(L.shape)
     C[1:,1:] = np.linalg.inv(L[1:,1:])
     A_coo = A.tocoo()
-    values = resistance_to_flow(C, A.indptr, A.indices)
-    return values
+    row_idx, col_idx = zip(*((i,j) for (i,j) in zip(A_coo.row, A_coo.col) if i<j))
+    values = resistance_to_flow(C, row_idx, col_idx)
+    
+    return coo_matrix((values+values, (row_idx+col_idx, col_idx+row_idx)))
 
 
 # -------------------------------------------------------------------
